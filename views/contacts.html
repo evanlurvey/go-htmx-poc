@@ -1,0 +1,36 @@
+{{template "layouts/main.html" .}} {{define "content"}}
+<div class="flex flex-col gap-8 m-2">
+  <table class="rounded-lg bg-neutral-100">
+    <tr>
+      <th>First</th>
+      <th>Last</th>
+      <th>Phone</th>
+      <th>Email</th>
+      <th></th>
+    </tr>
+
+    {{range .contacts}}
+    <tr>
+      <td>{{ .First }}</td>
+      <td>{{ .Last }}</td>
+      <td>{{ .Phone }}</td>
+      <td>{{ .Email }}</td>
+      <td class="grid grid-cols-2 gap-1 text-center">
+        <a class="py-1 px-2 bg-pink-200 rounded" href="/contacts/{{ .ID }}">
+          View
+        </a>
+        <a
+          class="py-1 px-2 bg-blue-200 rounded"
+          href="/contacts/{{ .ID }}/edit"
+        >
+          Edit
+        </a>
+      </td>
+    </tr>
+    {{end}}
+  </table>
+  <a href="/contacts/new" class="py-1 px-2 bg-green-200 rounded">
+    New Contact
+  </a>
+</div>
+{{end}}

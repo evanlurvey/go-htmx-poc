@@ -1,0 +1,8 @@
+{{template "layouts/main.html" .}} {{define "content"}} {{with .contact}}
+<form method="POST">
+  <input name="id" value="{{ .ID }}" type="hidden" />
+  <input name="first" value="{{.First}}" type="text" />
+  <input name="last" value="{{.Last}}" type="text" />
+  <button type="submit">Save</button>
+</form>
+{{end}} {{end}}
