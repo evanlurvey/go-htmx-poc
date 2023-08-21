@@ -1,8 +1,34 @@
-{{template "layouts/main.html" .}} {{define "content"}} {{with .contact}}
-<form method="POST">
-  <input name="id" value="{{ .ID }}" type="hidden" />
-  <input name="first" value="{{.First}}" type="text" />
-  <input name="last" value="{{.Last}}" type="text" />
-  <button type="submit">Save</button>
+{{define "labeledinput"}}
+<label class="font-medium flex flex-col">
+  <p>{{.Label}}</p>
+  <input
+    class="py-1 px-2 font-normal rounded border"
+    name="{{.Name}}"
+    value="{{.Value}}"
+    type="{{.Type}}"
+  />
+  {{with .Error}}
+  <p class="text-xs text-red-800">{{.}}</p>
+  {{end}}
+</label>
+{{end}}
+<!--  -->
+{{template "layouts/main.html" .}}
+<!--  -->
+{{define "content"}}
+<!--  -->
+<form method="POST" class="flex flex-col gap-4 p-8">
+  <h1 class="text-xl font-semibold">
+    {{if .new}} Create Contact {{else}} Update {{.contact.First}}
+    {{.contact.Last}} {{end}}
+  </h1>
+  <!--form fields-->
+  {{CSRFTokenInput}}
+  <input name="ID" value="{{ .id }}" type="hidden" />
+  {{template "labeledinput" .form.First}} {{template "labeledinput" .form.Last}}
+  {{template "labeledinput" .form.Phone}} {{template "labeledinput" .form.Email}}
+  <button class="font-medium bg-blue-400 rounded border" type="submit">
+    {{if .new}}Create{{else}}Save{{end}}
+  </button>
 </form>
-{{end}} {{end}}
+{{end}}

@@ -1,5 +1,9 @@
-{{template "layouts/main.html" .}} {{define "content"}} {{with .contact}}
-<h1>{{.First}} {{.Last}}</h1>
+{{template "layouts/main.html" .}} 
+{{define "content"}} 
+{{with .contact}}
+<h1 class="text-2xl">Details View</h1>
+<h2 class="text-xl">{{.First}} {{.Last}}</h1>
 <p>phone: {{.Phone}}</p>
 <p>email: {{.Email}}</p>
-{{end}} {{end}}
+{{end}} 
+{{end}}

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"embed"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -13,42 +16,36 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// TODO: current thought is I need to make a form input field struct that can be passed in
+// to auto build forms and handle error responses and what not in a standard way.
+// should be helpful to keep things consistent and quick.
+
 var appversion string
+var csrfSecret string = "secret"
+
+func NewCSRFToken(sessionID string) string {
+	mac := hmac.New(sha256.New, []byte(csrfSecret))
+	_, _ = mac.Write([]byte(sessionID))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func VerifyCSRFToken(sessionID, token string) bool {
+	og, err := hex.DecodeString(token)
+	if err != nil {
+		return false
+	}
+	// PERF: I know this is wasteful but whatever
+	expected, _ := hex.DecodeString(NewCSRFToken(sessionID))
+	return hmac.Equal(expected, og)
+}
 
 func init() {
-	var b = make([]byte, 16)
-	_, err := io.ReadFull(rand.Reader, b)
-	if err != nil {
-		panic(err)
-	}
-	appversion = hex.EncodeToString(b)
+	appversion = newID()
 }
+
 
 //go:embed views
 var templatesFS embed.FS
-
-type Contact struct {
-	ID    string
-	First string
-	Last  string
-	Phone string
-	Email string
-}
-
-var contacts = []Contact{
-	{
-		ID:    "1",
-		First: "allee",
-		Last:  "crabb",
-		Email: "crabballee@gmail.com",
-	},
-	{
-		ID:    "2",
-		First: "evan",
-		Last:  "lurvey",
-		Phone: "417-576-1238",
-	},
-}
 
 type TemplateEngine struct {
 	fs            embed.FS
@@ -63,9 +60,30 @@ func (e *TemplateEngine) openFile(name string) string {
 	return string(ts)
 }
 
+func (TemplateEngine) dict(args ...any) (map[string]any, error) {
+	if len(args)%2 != 0 {
+		return nil, errors.New("invalid dict call")
+	}
+	dict := make(map[string]any, len(args)/2)
+	for i := 0; i < len(args); i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = args[i+1]
+	}
+	return dict, nil
+}
+
 func (e *TemplateEngine) Render(c *fiber.Ctx, name string, binding interface{}, layout ...string) error {
 	t := template.New("__root__").Funcs(template.FuncMap{
+		"dict":       e.dict,
 		"AppVersion": func() string { return appversion },
+		"CSRFToken":  func() string { return NewCSRFToken(c.Cookies("session")) },
+		"CSRFTokenInput": func() template.HTML {
+			token := NewCSRFToken(c.Cookies("session"))
+			return template.HTML(`<input type="hidden" name="csrf_token" value="` + token + `" /> `)
+		},
 	})
 	var err error
 	// default layout load
@@ -89,7 +107,62 @@ func (e *TemplateEngine) Render(c *fiber.Ctx, name string, binding interface{}, 
 	}
 	c.Set("content-type", fiber.MIMETextHTMLCharsetUTF8)
 	return t.ExecuteTemplate(c, name, binding)
+}
 
+type controller interface {
+	Setup(fiber.Router)
+}
+
+func setupController(app fiber.Router, c controller) {
+	c.Setup(app)
+}
+
+func main() {
+	db := &DB{
+		contacts: []Contact{
+			{
+				ID:    "1",
+				First: "allee",
+				Last:  "crabb",
+				Email: "crabballee@gmail.com",
+			},
+			{
+				ID:    "2",
+				First: "evan",
+				Last:  "lurvey",
+				Phone: "417-576-1238",
+			},
+		},
+	}
+
+	engine := &TemplateEngine{
+		fs:            templatesFS,
+		defaultLayout: "layouts/main.html",
+	}
+
+	app := fiber.New(fiber.Config{
+		Immutable:             true, // string buffers get reused otherwise and shit gets weird when using in memory things
+		DisableStartupMessage: true,
+	})
+	// FIX: remove in prod
+	setupAutoReloadWS(app)
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return engine.Render(c, "index.html", map[string]any{
+			"ctx":  c.UserContext(),
+			"name": "evan<p>lol</p>",
+		})
+	})
+
+	setupController(app, &ContactsRouter{
+		templates: engine,
+		db:        db,
+	})
+
+	slog.Info("starting server")
+	if err := app.Listen(":8080"); err != nil {
+		slog.Error("failed to start server", err)
+	}
 }
 
 func setupAutoReloadWS(app *fiber.App) {
@@ -129,72 +202,11 @@ func setupAutoReloadWS(app *fiber.App) {
 	}))
 }
 
-func main() {
-	engine := &TemplateEngine{
-		fs:            templatesFS,
-		defaultLayout: "layouts/main.html",
+func newID() string {
+	var b = make([]byte, 16)
+	_, err := io.ReadFull(rand.Reader, b)
+	if err != nil {
+		panic(err)
 	}
-
-	app := fiber.New(fiber.Config{
-		DisableStartupMessage: true,
-	})
-	// FIX: remove in prod
-	setupAutoReloadWS(app)
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return engine.Render(c, "index.html", map[string]any{
-			"ctx":  c.UserContext(),
-			"name": "evan<p>lol</p>",
-		})
-	})
-
-	app.Route("/contacts", func(r fiber.Router) {
-		r.Get("/", func(c *fiber.Ctx) error {
-			return engine.Render(c, "contacts.html", map[string]any{
-				"contacts": contacts,
-			})
-		})
-		r.Get("/:id", func(c *fiber.Ctx) error {
-			id := c.Params("id")
-			slog.Info("contact detail", slog.String("contact_id", id))
-			contact, found := get(contacts, func(c Contact) bool { return c.ID == id })
-			if !found {
-				return c.SendStatus(404)
-			}
-			return engine.Render(c, "contacts-detail.html", map[string]any{
-				"contact": contact,
-			})
-		})
-		r.Get("/:id/edit", func(c *fiber.Ctx) error {
-			id := c.Params("id")
-			slog.Info("contact detail", slog.String("contact_id", id))
-			contact, found := get(contacts, func(c Contact) bool { return c.ID == id })
-			if !found {
-				return c.SendStatus(404)
-			}
-			return engine.Render(c, "contacts-form.html", map[string]any{
-				"contact": contact,
-			})
-		})
-		r.Get("/new", func(c *fiber.Ctx) error {
-			c.Set("content-type", fiber.MIMETextHTMLCharsetUTF8)
-			return c.SendStatus(200)
-
-		})
-	})
-
-	slog.Info("starting server")
-	if err := app.Listen(":8080"); err != nil {
-		slog.Error("failed to start server", err)
-	}
-}
-
-func get[T any](arr []T, f func(v T) bool) (out T, found bool) {
-	for _, v := range arr {
-		if f(v) {
-			slog.Info("found ya")
-			return v, true
-		}
-	}
-	return
+	return hex.EncodeToString(b)
 }
