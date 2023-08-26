@@ -1,4 +1,4 @@
-package main
+package contacts
 
 import (
 	"fmt"
@@ -8,6 +8,26 @@ import (
 type DB struct {
 	m        sync.RWMutex
 	contacts []Contact
+}
+
+func NewDB() *DB {
+	db := &DB{
+		contacts: []Contact{
+			{
+				ID:    "1",
+				First: "allee",
+				Last:  "crabb",
+				Email: "crabballee@gmail.com",
+			},
+			{
+				ID:    "2",
+				First: "evan",
+				Last:  "lurvey",
+				Phone: "417-576-1238",
+			},
+		},
+	}
+	return db
 }
 
 func (db *DB) FindContacts() []Contact {

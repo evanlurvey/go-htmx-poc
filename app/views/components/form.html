@@ -1,0 +1,35 @@
+<!--Input template-->
+{{define "input"}}
+<!--Hidden-->
+{{if eq .Type "hidden"}}
+<input name="{{.Name}}" value="{{.Value}}" type="hidden" />
+{{else}}
+<!--Labeled Input-->
+<label class="flex flex-col font-medium">
+    <p>{{.Label}}</p>
+    <input class="py-2 px-2 font-normal rounded border" name="{{.Name}}" value="{{.Value}}" type="{{.Type}}" />
+    {{with .Error}}
+    <p class="text-xs text-red-800">{{.}}</p>
+    {{end}}
+</label>
+{{end}} {{end}}
+
+<!--Actual form-->
+<form method="POST" class="flex flex-col gap-4">
+    <h1 class="text-3xl font-semibold">{{.form.Title}}</h1>
+    <!--CSRF-->
+    <input type="hidden" name="csrf_token" value="{{.form.CSRFToken}}" />
+    <!--form fields-->
+    {{range .form.Fields}} {{template "input" .}} {{end}}
+    <div class="flex flex-row gap-4 justify-end">
+        <button class="py-2 px-8 font-medium bg-blue-400 rounded border disabled:bg-gray-400" type="submit"
+            _="on click toggle @disabled until htmx:afterOnLoad">
+            {{.form.SubmitButtonText}}
+        </button>
+        {{if .form.BackButton }}
+        <a href="javascript:history.back()" class="py-2 px-8 font-medium text-center bg-transparent rounded border">
+            Back
+        </a>
+        {{end}}
+    </div>
+</form>

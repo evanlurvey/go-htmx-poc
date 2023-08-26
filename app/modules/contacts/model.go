@@ -1,7 +1,7 @@
-package main
+package contacts
 
 type Contact struct {
-	ID    string
+	ID    string `inputType:"hidden"`
 	First string `validate:"gt=1"`
 	Last  string `validate:"gt=1"`
 	Phone string
