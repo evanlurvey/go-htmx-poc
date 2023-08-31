@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,17 +24,15 @@ func SetupAutoReloadWS(app *fiber.App, appversion string) {
 			err error
 		)
 		if err = c.WriteMessage(websocket.TextMessage, []byte(appversion)); err != nil {
-			fmt.Println("open err:", err)
+			return
 		}
+
 		for {
 			if mt, msg, err = c.ReadMessage(); err != nil {
-				fmt.Println("read:", err)
 				break
 			}
-			fmt.Printf("recv: %s", msg)
 
 			if err = c.WriteMessage(mt, msg); err != nil {
-				fmt.Println("write:", err)
 				break
 			}
 		}

@@ -4,7 +4,6 @@ import (
 	"htmx-poc/app"
 	"htmx-poc/app/csrf"
 	"htmx-poc/validation"
-	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -83,7 +82,6 @@ func (r *Router) NewPOST(c *fiber.Ctx) error {
 
 func (r *Router) Details(c *fiber.Ctx) error {
 	id := c.Params("id")
-	slog.Info("contact detail", slog.String("contact_id", id))
 	contact, found := r.db.GetContactByID(id)
 	if !found {
 		return c.SendStatus(404)
@@ -96,7 +94,6 @@ func (r *Router) Details(c *fiber.Ctx) error {
 func (r *Router) EditGET(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 	id := c.Params("id")
-	slog.Info("contact detail", slog.String("contact_id", id))
 	contact, found := r.db.GetContactByID(id)
 	if !found {
 		return c.SendStatus(404)
@@ -107,6 +104,7 @@ func (r *Router) EditGET(c *fiber.Ctx) error {
 		"form": form,
 	})
 }
+
 func (r *Router) EditPOST(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 	id := c.Params("id")

@@ -5,9 +5,10 @@ import (
 	"htmx-poc/app/csrf"
 	"htmx-poc/app/modules/auth"
 	"htmx-poc/app/modules/contacts"
-	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // TODO: current thought is I need to make a form input field struct that can be passed in
@@ -20,15 +21,19 @@ func init() {
 	appversion = app.NewID()
 }
 
-type controller interface {
-	Setup(fiber.Router)
-}
-
-func setupController(app fiber.Router, c controller) {
-	c.Setup(app)
+func logger() *zap.Logger {
+	zapConfig := zap.NewProductionConfig()
+	zapConfig.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+	l, err := zapConfig.Build()
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 
 func main() {
+	l := logger()
+
 	web := fiber.New(fiber.Config{
 		Immutable:             true, // string buffers get reused otherwise and shit gets weird when using in memory things
 		DisableStartupMessage: true,
@@ -38,6 +43,7 @@ func main() {
 
 	engine := app.NewTemplateEngine(csrf, appversion, "layouts/main.html")
 
+	web.Use(app.LoggingMiddleware(l))
 	web.Use(csrf.ErrorHandler)
 	web.Use(app.SessionMiddleware)
 
@@ -57,8 +63,8 @@ func main() {
 	authDB := auth.NewDB()
 	auth.NewRouter(engine, authDB, csrf).Setup(web)
 
-	slog.Info("starting server")
+	l.Info("starting server")
 	if err := web.Listen(":8080"); err != nil {
-		slog.Error("failed to start server", err)
+		l.Panic("failed to start server", zap.Error(err))
 	}
 }
