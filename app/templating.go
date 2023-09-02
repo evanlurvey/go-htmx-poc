@@ -43,7 +43,11 @@ func (e TemplateEngine) Render(c *fiber.Ctx, name string, binding map[string]any
 	e.loadLayout(t, layouts...)
 
 	// main template
-	t, err = t.New(name).Parse(e.openFile(name))
+	f, err := e.openFile(name)
+	if err != nil {
+		return err
+	}
+	t, err = t.New(name).Parse(f)
 	if err != nil {
 		return err
 	}
@@ -51,12 +55,12 @@ func (e TemplateEngine) Render(c *fiber.Ctx, name string, binding map[string]any
 	return t.ExecuteTemplate(c, name, binding)
 }
 
-func (e TemplateEngine) openFile(name string) string {
+func (e TemplateEngine) openFile(name string) (string, error) {
 	ts, err := e.fs.ReadFile("views/" + name)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return string(ts)
+	return string(ts), nil
 }
 
 func (TemplateEngine) dict(args ...any) (map[string]any, error) {
@@ -78,10 +82,20 @@ func (e TemplateEngine) appVersion() string { return e.appversion }
 
 func (e TemplateEngine) form(ctx context.Context) func(f Form) (template.HTML, error) {
 	return func(f Form) (template.HTML, error) {
-		t, err := template.New("form").Parse(e.openFile("components/form.html"))
+		f = f.AddCSRFToken(ctx, e.csrf)
+		if f.Template == "" {
+			f.Template = "components/form.html"
+		}
+		tf, err := e.openFile(f.Template)
 		if err != nil {
 			return "", err
 		}
+
+		t, err := template.New("form").Parse(tf)
+		if err != nil {
+			return "", err
+		}
+
 		var buf bytes.Buffer
 		err = t.Execute(&buf, map[string]any{
 			"form": f,
@@ -91,10 +105,13 @@ func (e TemplateEngine) form(ctx context.Context) func(f Form) (template.HTML, e
 }
 
 func (e TemplateEngine) loadLayout(t *template.Template, layouts ...string) error {
-	var err error
 	// default layout load
 	if e.defaultLayout != "" && len(layouts) == 0 {
-		t, err = t.New(e.defaultLayout).Parse(e.openFile(e.defaultLayout))
+		f, err := e.openFile(e.defaultLayout)
+		if err != nil {
+			return err
+		}
+		t, err = t.New(e.defaultLayout).Parse(f)
 		if err != nil {
 			return err
 		}
@@ -102,7 +119,11 @@ func (e TemplateEngine) loadLayout(t *template.Template, layouts ...string) erro
 	}
 	// optional layouts load
 	for _, l := range layouts {
-		t, err = t.New(l).Parse(e.openFile(l))
+		f, err := e.openFile(l)
+		if err != nil {
+			return err
+		}
+		t, err = t.New(l).Parse(f)
 		if err != nil {
 			return err
 		}

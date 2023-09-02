@@ -1,6 +1,9 @@
 package validation
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -19,25 +22,27 @@ func init() {
 	// Ignore if found or not.
 	validate_translator, _ = uni.GetTranslator("en")
 
+	// Get proper field names from json
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		// the split is for when there is extra shit like omitempty
+		name := fld.Name
+		fmt.Printf("name: %s\n", name)
+		if customName := fld.Tag.Get("label"); customName != "" {
+			name = customName
+		}
+		fmt.Printf("labeled name: %s\n", name)
+
+		return name
+	})
+
 	// Register translations for pretty text
 	if err := en_translations.RegisterDefaultTranslations(validate, validate_translator); err != nil {
 		panic(err)
 	}
-
-	// Get proper field names from json
-	// validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-	// 	// the split is for when there is extra shit like omitempty
-	// 	name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-	//
-	// 	if name == "-" {
-	// 		return ""
-	// 	}
-	//
-	// 	return name
-	// })
 }
 
 type Errors []Error
+
 type Error struct {
 	Name    string
 	Message string
@@ -51,7 +56,7 @@ func ValidateStruct(data any) Errors {
 		out := make(Errors, len(errs))
 		for _, ve := range errs {
 			out = append(out, Error{
-				Name:    ve.Field(),
+				Name:    ve.StructField(),
 				Message: ve.Translate(validate_translator),
 			})
 		}

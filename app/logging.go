@@ -45,11 +45,11 @@ func LoggingMiddleware(l *zap.Logger) fiber.Handler {
 		err := c.Next()
 		l.Info(
 			"request finished",
-            // req fields should match above
+			// req fields should match above
 			zap.String("method", c.Method()),
 			zap.String("path", c.Path()),
-            // resp fields
-            zap.Int("status_code", c.Response().StatusCode()),
+			// resp fields
+			zap.Int("status_code", c.Response().StatusCode()),
 			zap.Duration("duration", time.Since(start)),
 			zap.Error(err),
 		)

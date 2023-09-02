@@ -57,11 +57,13 @@ func main() {
 		})
 	})
 
+	form := app.NewFormService(csrf)
+
 	contactsDB := contacts.NewDB()
-	contacts.NewRouter(engine, contactsDB, csrf).Setup(web)
+	contacts.NewRouter(engine, contactsDB, form).Setup(web)
 
 	authDB := auth.NewDB()
-	auth.NewRouter(engine, authDB, csrf).Setup(web)
+	auth.NewRouter(engine, authDB, form).Setup(web)
 
 	l.Info("starting server")
 	if err := web.Listen(":8080"); err != nil {

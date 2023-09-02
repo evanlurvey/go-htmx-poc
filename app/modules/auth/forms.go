@@ -23,8 +23,8 @@ type LoginFormData struct {
 }
 
 type LoginRequest struct {
-	Email    string
-	Password string `inputType:"password"`
+	Email    string `validate:"email"`
+	Password string `validate:"required" inputType:"password"`
 }
 
 // Create Account
@@ -41,6 +41,13 @@ type CreateAccountFormData struct {
 }
 
 type CreateAccountRequest struct {
-	Email    string
-	Password string `inputType:"password"`
+	FirstName       string `validate:"required" label:"First Name"`
+	LastName        string `validate:"required" label:"Last Name"`
+	Email           string `validate:"email"`
+	Password        string `validate:"gte=8,lte=70" inputType:"password"`
+	ConfirmPassword string `validate:"eqfield=Password" label:"Confirm Password" inputType:"password"`
+}
+
+func init() {
+	CreateAccountForm = CreateAccountForm.GenerateFields(CreateAccountRequest{})
 }

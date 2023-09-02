@@ -6,6 +6,8 @@ import (
 	"htmx-poc/validation"
 	"reflect"
 	"slices"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type FormField struct {
@@ -22,6 +24,7 @@ type FormFields []FormField
 
 type Form struct {
 	Title            string
+	Template         string
 	Fields           FormFields
 	SubmitButtonText string
 	BackButton       bool
@@ -86,4 +89,26 @@ func OrDefault[T comparable](v, d T) T {
 		return d
 	}
 	return v
+}
+
+func NewFormService(csrf csrf.Service) FormService {
+	return FormService{
+		csrf: csrf,
+	}
+}
+
+type FormService struct {
+	csrf csrf.Service
+}
+
+func (fv FormService) Parse(c *fiber.Ctx, formData interface{ GetCSRFToken() string }) error {
+	ctx := c.UserContext()
+	session := SessionFromCtx(ctx)
+	if err := c.BodyParser(formData); err != nil {
+		return err
+	}
+	if err := fv.csrf.VerifyToken(session.ID, formData.GetCSRFToken()); err != nil {
+		return err
+	}
+	return nil
 }
