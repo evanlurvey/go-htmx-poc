@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupAutoReloadWS(app *fiber.App, appversion string) {
+func SetupAutoReloadWS(app *fiber.App) {
 	app.Use("/dev/ws", func(c *fiber.Ctx) error {
 		// IsWebSocketUpgrade returns true if the client
 		// requested upgrade to the WebSocket protocol.
@@ -23,7 +23,7 @@ func SetupAutoReloadWS(app *fiber.App, appversion string) {
 			msg []byte
 			err error
 		)
-		if err = c.WriteMessage(websocket.TextMessage, []byte(appversion)); err != nil {
+		if err = c.WriteMessage(websocket.TextMessage, []byte(AppVersion())); err != nil {
 			return
 		}
 

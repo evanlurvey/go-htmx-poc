@@ -1,4 +1,4 @@
-package auth
+package identity
 
 import (
 	"htmx-poc/app"
@@ -23,8 +23,8 @@ type LoginFormData struct {
 }
 
 type LoginRequest struct {
-	Email    string `validate:"email"`
-	Password string `validate:"required" inputType:"password"`
+	Email    string `validate:"email,lte=200"`
+	Password string `validate:"required,lte=70" inputType:"password"`
 }
 
 // Create Account
@@ -41,9 +41,9 @@ type CreateAccountFormData struct {
 }
 
 type CreateAccountRequest struct {
-	FirstName       string `validate:"required" label:"First Name"`
-	LastName        string `validate:"required" label:"Last Name"`
-	Email           string `validate:"email"`
+	FirstName       string `validate:"required,lte=80" label:"First Name"`
+	LastName        string `validate:"required,lte=80" label:"Last Name"`
+	Email           string `validate:"email,lte=200"`
 	Password        string `validate:"gte=8,lte=70" inputType:"password"`
 	ConfirmPassword string `validate:"eqfield=Password" label:"Confirm Password" inputType:"password"`
 }

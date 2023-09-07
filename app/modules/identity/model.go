@@ -1,15 +1,53 @@
-package auth
+package identity
 
 import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"htmx-poc/utils"
 	"io"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/argon2"
 )
+
+type user struct {
+	id        string
+	firstName string
+	lastName  string
+	email     string
+	password  phc
+}
+
+type loginOutcome uint8
+
+const (
+	loginOutcome_nil loginOutcome = iota
+	loginOutcome_success
+	loginOutcome_invalidEmail
+	loginOutcome_invalidPassword
+)
+
+type loginAttempts []loginAttempt
+
+func (la loginAttempts) Unsuccessful() int {
+	return len(
+		utils.FilterFunc(
+			la,
+			func(la loginAttempt) bool { return la.outcome != loginOutcome_success },
+		),
+	)
+}
+
+type loginAttempt struct {
+	id      string
+	at      time.Time
+	user_id string // optional field
+	email   string
+	outcome loginOutcome
+}
 
 /////////////////////////////////
 // Passwords / PHC Section

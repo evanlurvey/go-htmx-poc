@@ -32,4 +32,7 @@
         </a>
         {{end}}
     </div>
+    {{with .form.Error}}
+    <div class="text-red-800">{{.}}</div>
+    {{end}}
 </form>

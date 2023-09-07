@@ -13,21 +13,46 @@ type sessionctxkey string
 
 const sessionCtxKey sessionctxkey = "session"
 
-type SessionType string
+type SessionState uint8
 
 const (
-	SessionTypeAnonymous = "anonymous"
+	SessionState_Anonymous SessionState = iota
+	SessionState_Authenticated
 )
 
 type Session struct {
-	ID   string
-	Type string
+	id      string
+	token   string
+	expires time.Time
+	state   SessionState
+	user    User
+}
+
+func (s *Session) ID() string {
+	return s.id
+}
+
+func (s *Session) User() (User, bool) {
+	if s.state == SessionState_Authenticated && time.Now().Before(s.expires) {
+		return s.user, true
+	}
+	return User{}, false
 }
 
 func NewAnonymousSession() Session {
 	return Session{
-		ID:   NewID(),
-		Type: SessionTypeAnonymous,
+		id:    NewID(),
+        token: NewID(32),
+		state: SessionState_Anonymous,
+	}
+}
+
+func NewAuthenticatedSession(u User) Session {
+	return Session{
+		id:    NewID(),
+        token: NewID(32),
+		state: SessionState_Authenticated,
+		user:  u,
 	}
 }
 
@@ -48,9 +73,9 @@ func SessionMiddleware(c *fiber.Ctx) error {
 		session = NewAnonymousSession()
 		c.Cookie(&fiber.Cookie{
 			Name:     sessionCookie,
-			Value:    session.ID,
+			Value:    session.token,
 			Path:     "/",
-			MaxAge:   int(time.Hour * 24),
+			Expires:  time.Now().Add(time.Hour),
 			Secure:   true,
 			HTTPOnly: true, // still sent with ajax calls
 			SameSite: "Lax",
@@ -58,8 +83,7 @@ func SessionMiddleware(c *fiber.Ctx) error {
 	} else {
 		// TODO: Validate and build session
 		session = Session{
-			ID:   sid,
-			Type: SessionTypeAnonymous,
+			id: sid,
 		}
 	}
 	ctx = context.WithValue(ctx, sessionCtxKey, session)

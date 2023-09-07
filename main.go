@@ -1,25 +1,13 @@
 package main
 
 import (
+	"context"
 	"htmx-poc/app"
-	"htmx-poc/app/csrf"
-	"htmx-poc/app/modules/auth"
-	"htmx-poc/app/modules/contacts"
+	"htmx-poc/app/web"
 
-	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-// TODO: current thought is I need to make a form input field struct that can be passed in
-// to auto build forms and handle error responses and what not in a standard way.
-// should be helpful to keep things consistent and quick.
-
-var appversion string
-
-func init() {
-	appversion = app.NewID()
-}
 
 func logger() *zap.Logger {
 	zapConfig := zap.NewProductionConfig()
@@ -33,37 +21,11 @@ func logger() *zap.Logger {
 
 func main() {
 	l := logger()
+	ctx := app.AttachLogger(context.Background(), l)
 
-	web := fiber.New(fiber.Config{
-		Immutable:             true, // string buffers get reused otherwise and shit gets weird when using in memory things
-		DisableStartupMessage: true,
+	web := web.NewWebApp(ctx, web.Config{
+		CSRFSecret: []byte("not a secret"),
 	})
-
-	csrf := csrf.New([]byte("TODO: Change me"))
-
-	engine := app.NewTemplateEngine(csrf, appversion, "layouts/main.html")
-
-	web.Use(app.LoggingMiddleware(l))
-	web.Use(csrf.ErrorHandler)
-	web.Use(app.SessionMiddleware)
-
-	// FIX: remove in prod
-	app.SetupAutoReloadWS(web, appversion)
-
-	web.Get("/", func(c *fiber.Ctx) error {
-		return engine.Render(c, "pages/index.html", map[string]any{
-			"ctx":  c.UserContext(),
-			"name": "evan<p>lol</p>",
-		})
-	})
-
-	form := app.NewFormService(csrf)
-
-	contactsDB := contacts.NewDB()
-	contacts.NewRouter(engine, contactsDB, form).Setup(web)
-
-	authDB := auth.NewDB()
-	auth.NewRouter(engine, authDB, form).Setup(web)
 
 	l.Info("starting server")
 	if err := web.Listen(":8080"); err != nil {

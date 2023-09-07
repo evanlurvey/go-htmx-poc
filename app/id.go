@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// size in bytes
 func NewID(size ...uint8) string {
 	var s uint8 = 16
 	if len(size) == 1 {

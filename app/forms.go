@@ -27,6 +27,7 @@ type Form struct {
 	Template         string
 	Fields           FormFields
 	SubmitButtonText string
+	Error            string
 	BackButton       bool
 	CSRFToken        string
 }
@@ -38,7 +39,7 @@ func (f Form) Clone() Form {
 
 func (f Form) AddCSRFToken(ctx context.Context, csrf csrf.Service) Form {
 	session := SessionFromCtx(ctx)
-	f.CSRFToken = csrf.NewToken(session.ID)
+	f.CSRFToken = csrf.NewToken(session.ID())
 	return f
 }
 
@@ -107,7 +108,7 @@ func (fv FormService) Parse(c *fiber.Ctx, formData interface{ GetCSRFToken() str
 	if err := c.BodyParser(formData); err != nil {
 		return err
 	}
-	if err := fv.csrf.VerifyToken(session.ID, formData.GetCSRFToken()); err != nil {
+	if err := fv.csrf.VerifyToken(session.ID(), formData.GetCSRFToken()); err != nil {
 		return err
 	}
 	return nil

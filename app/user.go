@@ -2,5 +2,7 @@ package app
 
 type User struct {
 	ID   string
-	Name string
+    FirstName string
+    LastName string
+    Email string
 }

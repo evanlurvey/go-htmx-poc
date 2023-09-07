@@ -15,18 +15,16 @@ import (
 var templatesFS embed.FS
 
 type TemplateEngine struct {
-	fs            embed.FS
+	fs            interface{ ReadFile(string) ([]byte, error) }
 	csrf          csrf.Service
 	defaultLayout string
-	appversion    string
 }
 
-func NewTemplateEngine(csrfService csrf.Service, appversion string, defaultLayout string) TemplateEngine {
+func NewTemplateEngine(csrfService csrf.Service, defaultLayout string) TemplateEngine {
 	return TemplateEngine{
 		fs:            templatesFS,
 		csrf:          csrfService,
 		defaultLayout: defaultLayout,
-		appversion:    appversion,
 	}
 }
 
@@ -35,7 +33,7 @@ func (e TemplateEngine) Render(c *fiber.Ctx, name string, binding map[string]any
 	// TODO: Extract funcs into something else
 	t := template.New("__root__").Funcs(template.FuncMap{
 		"dict":       e.dict,
-		"AppVersion": e.appVersion,
+		"AppVersion": AppVersion,
 		"form":       e.form(ctx),
 	})
 
@@ -77,8 +75,6 @@ func (TemplateEngine) dict(args ...any) (map[string]any, error) {
 	}
 	return dict, nil
 }
-
-func (e TemplateEngine) appVersion() string { return e.appversion }
 
 func (e TemplateEngine) form(ctx context.Context) func(f Form) (template.HTML, error) {
 	return func(f Form) (template.HTML, error) {

@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/go-playground/locales/en"
@@ -26,12 +25,9 @@ func init() {
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		// the split is for when there is extra shit like omitempty
 		name := fld.Name
-		fmt.Printf("name: %s\n", name)
 		if customName := fld.Tag.Get("label"); customName != "" {
 			name = customName
 		}
-		fmt.Printf("labeled name: %s\n", name)
-
 		return name
 	})
 
