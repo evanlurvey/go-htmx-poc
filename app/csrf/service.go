@@ -1,12 +1,11 @@
 package csrf
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 var InvalidCSRFError = errors.New("invalid csrf")
@@ -21,29 +20,16 @@ func New(secret []byte) Service {
 	}
 }
 
-func (c Service) NewToken(sessionID string) string {
+func (c Service) NewToken(sid string) string {
 	mac := hmac.New(sha256.New, c.secret)
-	_, _ = mac.Write([]byte(sessionID))
-	return hex.EncodeToString(mac.Sum(nil))
+	_, _ = mac.Write([]byte(sid))
+	return base64.URLEncoding.EncodeToString(mac.Sum(nil))
 }
 
-func (c Service) VerifyToken(sessionID, token string) error {
-	og, err := hex.DecodeString(token)
-	if err != nil {
-		return err
-	}
-	mac := hmac.New(sha256.New, c.secret)
-	_, _ = mac.Write([]byte(sessionID))
-	if !hmac.Equal(mac.Sum(nil), og) {
+func VerifyToken(ctx context.Context, token string) error {
+	expected := FromContext(ctx)
+	if token != expected {
 		return InvalidCSRFError
 	}
 	return nil
-}
-
-func (Service) ErrorHandler(c *fiber.Ctx) error {
-	err := c.Next()
-	if errors.Is(err, InvalidCSRFError) {
-		return c.Status(401).SendString("invalid csrf")
-	}
-	return err
 }

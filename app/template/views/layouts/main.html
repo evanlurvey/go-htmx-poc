@@ -33,14 +33,20 @@
     </script>
 </head>
 
-<body hx-boost="true" class="flex flex-col">
+<body class="flex flex-col">
     <div class="flex flex-col">
-        <header class="flex bg-blue-500">
-            <a href="/contacts" class="py-2 px-4 text-xl font-extrabold text-white">
-                Contact Manager 
+        <header class="flex justify-between items-center py-2 px-4 bg-blue-500">
+            <a href="/contacts" class="text-xl font-extrabold text-white">
+                Contact Manager
             </a>
+            <div class="mx-4" hx-get="/counter" hx-trigger="auth from:body, click, load">
+                loading...
+            </div>
+            {{with ._user}} {{.FirstName}} {{end}}
         </header>
-        <div class="flex flex-col">{{block "content" .}}{{end}}</div>
+        <div hx-boost="true" hx-target="#content" class="flex flex-col" id="content">
+            {{block "content" .}}{{end}}
+        </div>
     </div>
 </body>
 

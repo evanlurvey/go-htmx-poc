@@ -1,8 +1,8 @@
 package contacts
 
 import (
-	"htmx-poc/app"
 	"htmx-poc/app/csrf"
+	"htmx-poc/app/forms"
 )
 
 type ContactFormData struct {
@@ -11,12 +11,12 @@ type ContactFormData struct {
 }
 
 var (
-	CreateContactForm = app.Form{
+	CreateContactForm = forms.Form{
 		Title:            "Create Contact",
 		SubmitButtonText: "Create",
 		BackButton:       true,
 	}
-	UpdateContactForm = app.Form{
+	UpdateContactForm = forms.Form{
 		Title:            "Update Contact",
 		SubmitButtonText: "Update",
 		BackButton:       true,

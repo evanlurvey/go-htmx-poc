@@ -13,12 +13,16 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+type User struct {
+	ID        string
+	FirstName string
+	LastName  string
+	Email     string
+}
+
 type user struct {
-	id        string
-	firstName string
-	lastName  string
-	email     string
-	password  phc
+	User
+	password phc
 }
 
 type loginOutcome uint8
@@ -49,9 +53,35 @@ type loginAttempt struct {
 	outcome loginOutcome
 }
 
-/////////////////////////////////
-// Passwords / PHC Section
-/////////////////////////////////
+type SessionState uint8
+
+const (
+	SessionState_Anonymous SessionState = iota
+	SessionState_Authenticated
+)
+
+type Session struct {
+	id      string
+	token   string
+	expires time.Time
+	state   SessionState
+	user    User
+}
+
+func (s Session) ID() string {
+	return s.id
+}
+
+func (s Session) User() (User, bool) {
+	if s.state == SessionState_Authenticated && s.Valid() {
+		return s.user, true
+	}
+	return User{}, false
+}
+
+func (s Session) Valid() bool {
+	return time.Now().Before(s.expires)
+}
 
 type phc struct {
 	algorithm string

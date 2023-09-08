@@ -10,9 +10,10 @@ import (
 )
 
 type DB struct {
-	m            sync.RWMutex
-	users        []user
-	loginAttempt []loginAttempt
+	m             sync.RWMutex
+	users         []user
+	loginAttempts []loginAttempt
+	sessions      []Session
 }
 
 func NewDB() *DB {
@@ -24,7 +25,7 @@ func (db *DB) storeUser(u user) error {
 	defer db.m.Unlock()
 
 	idx := slices.IndexFunc(db.users, func(uu user) bool {
-		return u.id == uu.id
+		return u.ID == uu.ID
 	})
 	if idx >= 0 {
 		db.users[idx] = u
@@ -39,7 +40,7 @@ func (db *DB) getUserByID(id string) (user, error) {
 	defer db.m.RUnlock()
 
 	idx := slices.IndexFunc(db.users, func(u user) bool {
-		return id == u.id
+		return id == u.ID
 	})
 	if idx < 0 {
 		return user{}, nil
@@ -52,7 +53,7 @@ func (db *DB) getUserByEmail(ctx context.Context, email string) (user, error) {
 	defer db.m.RUnlock()
 
 	idx := slices.IndexFunc(db.users, func(u user) bool {
-		return email == u.email
+		return email == u.Email
 	})
 	if idx < 0 {
 		return user{}, nil
@@ -64,10 +65,10 @@ func (db *DB) createLoginAttempt(ctx context.Context, la loginAttempt) error {
 	db.m.Lock()
 	defer db.m.Unlock()
 
-	if slices.ContainsFunc(db.loginAttempt, func(l loginAttempt) bool { return la.id == l.id }) {
+	if slices.ContainsFunc(db.loginAttempts, func(l loginAttempt) bool { return la.id == l.id }) {
 		return fmt.Errorf("id conflict")
 	}
-	db.loginAttempt = append(db.loginAttempt, la)
+	db.loginAttempts = append(db.loginAttempts, la)
 	return nil
 }
 
@@ -76,8 +77,50 @@ func (db *DB) getRecentAttempts(ctx context.Context, email string, last time.Dur
 	defer db.m.RUnlock()
 
 	window := time.Now().Add(-last)
-	attempts := utils.FilterFunc(db.loginAttempt, func(la loginAttempt) bool {
+	attempts := utils.FilterFunc(db.loginAttempts, func(la loginAttempt) bool {
 		return la.at.After(window) && la.email == email
 	})
 	return attempts, nil
+}
+
+func (db *DB) storeSession(ctx context.Context, s Session) error {
+	db.m.Lock()
+	defer db.m.Unlock()
+
+	idx := slices.IndexFunc(db.sessions, func(ss Session) bool {
+		return s.id == ss.id
+	})
+	if idx >= 0 {
+		db.sessions[idx] = s
+	} else {
+		db.sessions = append(db.sessions, s)
+	}
+	return nil
+}
+
+func (db *DB) getSessionByToken(ctx context.Context, token string) (Session, error) {
+	db.m.RLock()
+	defer db.m.RUnlock()
+	idx := slices.IndexFunc(db.sessions, func(s Session) bool {
+		return token == s.token
+	})
+	if idx < 0 {
+		return Session{}, nil
+	}
+	session := db.sessions[idx]
+
+	if session.user.ID == "" {
+		return session, nil
+	}
+
+	idx = slices.IndexFunc(db.users, func(u user) bool {
+		return session.user.ID == u.ID
+	})
+	if idx < 0 {
+		// session with a user set that doesn't exist. shouldn't ever happen
+		return Session{}, nil
+	}
+	session.user = db.users[idx].User
+	return session, nil
+
 }

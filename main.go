@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"htmx-poc/app"
+	"htmx-poc/app/logging"
 	"htmx-poc/app/web"
 
 	"go.uber.org/zap"
@@ -21,7 +21,7 @@ func logger() *zap.Logger {
 
 func main() {
 	l := logger()
-	ctx := app.AttachLogger(context.Background(), l)
+	ctx := logging.WithContext(context.Background(), l)
 
 	web := web.NewWebApp(ctx, web.Config{
 		CSRFSecret: []byte("not a secret"),

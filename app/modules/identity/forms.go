@@ -1,13 +1,13 @@
 package identity
 
 import (
-	"htmx-poc/app"
 	"htmx-poc/app/csrf"
+	"htmx-poc/app/forms"
 )
 
 // Login
 
-var LoginForm = app.Form{
+var LoginForm = forms.Form{
 	Title:            "Login",
 	SubmitButtonText: "Login",
 	BackButton:       true,
@@ -29,7 +29,7 @@ type LoginRequest struct {
 
 // Create Account
 
-var CreateAccountForm = app.Form{
+var CreateAccountForm = forms.Form{
 	Title:            "Create Account",
 	SubmitButtonText: "Create Account",
 	BackButton:       true,

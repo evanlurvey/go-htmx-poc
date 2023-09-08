@@ -1,4 +1,4 @@
-package app
+package forms
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"htmx-poc/validation"
 	"reflect"
 	"slices"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 type FormField struct {
@@ -37,9 +35,8 @@ func (f Form) Clone() Form {
 	return f
 }
 
-func (f Form) AddCSRFToken(ctx context.Context, csrf csrf.Service) Form {
-	session := SessionFromCtx(ctx)
-	f.CSRFToken = csrf.NewToken(session.ID())
+func (f Form) AddCSRFToken(ctx context.Context) Form {
+	f.CSRFToken = csrf.FromContext(ctx)
 	return f
 }
 
@@ -54,10 +51,10 @@ func (f Form) GenerateFields(in any, ve ...validation.Errors) Form {
 		f := v.Field(i)
 		ft := t.Field(i)
 		var (
-			label        = OrDefault(ft.Tag.Get("label"), ft.Name)
-			name         = OrDefault(ft.Tag.Get("name"), ft.Name)
+			label        = orDefault(ft.Tag.Get("label"), ft.Name)
+			name         = orDefault(ft.Tag.Get("name"), ft.Name)
 			value        any
-			inputType    = OrDefault(ft.Tag.Get("inputType"), "text")
+			inputType    = orDefault(ft.Tag.Get("inputType"), "text")
 			errorMessage string
 		)
 		// don't sendback sensitive data
@@ -84,32 +81,10 @@ func (f Form) GenerateFields(in any, ve ...validation.Errors) Form {
 	return form
 }
 
-func OrDefault[T comparable](v, d T) T {
+func orDefault[T comparable](v, d T) T {
 	var empty T
 	if v == empty {
 		return d
 	}
 	return v
-}
-
-func NewFormService(csrf csrf.Service) FormService {
-	return FormService{
-		csrf: csrf,
-	}
-}
-
-type FormService struct {
-	csrf csrf.Service
-}
-
-func (fv FormService) Parse(c *fiber.Ctx, formData interface{ GetCSRFToken() string }) error {
-	ctx := c.UserContext()
-	session := SessionFromCtx(ctx)
-	if err := c.BodyParser(formData); err != nil {
-		return err
-	}
-	if err := fv.csrf.VerifyToken(session.ID(), formData.GetCSRFToken()); err != nil {
-		return err
-	}
-	return nil
 }

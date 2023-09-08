@@ -2,6 +2,9 @@ package identity
 
 import (
 	"htmx-poc/app"
+	"htmx-poc/app/forms"
+	"htmx-poc/app/logging"
+	"htmx-poc/app/template"
 	"htmx-poc/validation"
 	"time"
 
@@ -9,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewRouter(templates app.TemplateEngine, db *DB, form app.FormService) *Router {
+func NewRouter(templates template.TemplateEngine, db *DB, form forms.Service) *Router {
 	return &Router{
 		templates: templates,
 		db:        db,
@@ -18,9 +21,9 @@ func NewRouter(templates app.TemplateEngine, db *DB, form app.FormService) *Rout
 }
 
 type Router struct {
-	templates app.TemplateEngine
+	templates template.TemplateEngine
 	db        *DB
-	form      app.FormService
+	form      forms.Service
 }
 
 func (r *Router) Setup(rtr fiber.Router) {
@@ -40,7 +43,8 @@ func (r *Router) LoginGET(c *fiber.Ctx) error {
 
 func (r *Router) LoginPOST(c *fiber.Ctx) error {
 	ctx := c.UserContext()
-	l := app.Logger(ctx)
+	c.Set("HX-Trigger", "auth")
+	l := logging.FromContext(ctx)
 	var formData LoginFormData
 	if err := r.form.Parse(c, &formData); err != nil {
 		return err
@@ -85,7 +89,7 @@ func (r *Router) LoginPOST(c *fiber.Ctx) error {
 		return r.templates.Render(c, "pages/identity/form.html", fiber.Map{
 			"form": form,
 		})
-	} else if user.id == "" {
+	} else if user.ID == "" {
 		r.db.createLoginAttempt(ctx, loginAttempt{
 			id:      app.NewID(),
 			at:      time.Now(),
@@ -103,7 +107,7 @@ func (r *Router) LoginPOST(c *fiber.Ctx) error {
 		r.db.createLoginAttempt(ctx, loginAttempt{
 			id:      app.NewID(),
 			at:      time.Now(),
-			user_id: user.id,
+			user_id: user.ID,
 			email:   req.Email,
 			outcome: loginOutcome_invalidPassword,
 		})
@@ -119,9 +123,22 @@ func (r *Router) LoginPOST(c *fiber.Ctx) error {
 	r.db.createLoginAttempt(ctx, loginAttempt{
 		id:      app.NewID(),
 		at:      time.Now(),
-		user_id: user.id,
+		user_id: user.ID,
 		email:   req.Email,
 		outcome: loginOutcome_success,
+	})
+
+	session := NewAuthenticatedSession(user.User)
+	r.db.storeSession(ctx, session)
+
+	c.Cookie(&fiber.Cookie{
+		Name:     sessionCookie,
+		Value:    session.token,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour),
+		Secure:   true,
+		HTTPOnly: true, // still sent with ajax calls
+		SameSite: "Lax",
 	})
 
 	return c.Redirect("/", 303)
@@ -151,17 +168,20 @@ func (r *Router) CreateAccountPOST(c *fiber.Ctx) error {
 	// check for existing account
 	if user, err := r.db.getUserByEmail(ctx, req.Email); err != nil {
 		return r.templates.Render(c, "pages/sorry.html", fiber.Map{})
-	} else if user.id != "" { // give them the same message to not leak accounts
+	} else if user.ID != "" { // give them the same message to not leak accounts
 		// TODO: Send email letting them know they had an account
 		return c.Redirect("/identity/account-created", 303)
 	}
 
+	// create account
 	err := r.db.storeUser(user{
-		id:        app.NewID(),
-		firstName: req.FirstName,
-		lastName:  req.LastName,
-		email:     req.Email,
-		password:  newPHC(req.Password),
+		User: User{
+			ID:        app.NewID(),
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			Email:     req.Email,
+		},
+		password: newPHC(req.Password),
 	})
 	if err != nil {
 		return r.templates.Render(c, "pages/sorry.html", fiber.Map{})

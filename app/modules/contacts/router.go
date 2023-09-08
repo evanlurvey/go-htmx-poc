@@ -2,12 +2,15 @@ package contacts
 
 import (
 	"htmx-poc/app"
+	"htmx-poc/app/forms"
+	"htmx-poc/app/template"
 	"htmx-poc/validation"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewRouter(templates app.TemplateEngine, db *DB, form app.FormService) *Router {
+func NewRouter(templates template.TemplateEngine, db *DB, form forms.Service) *Router {
 	return &Router{
 		templates: templates,
 		db:        db,
@@ -16,9 +19,9 @@ func NewRouter(templates app.TemplateEngine, db *DB, form app.FormService) *Rout
 }
 
 type Router struct {
-	templates app.TemplateEngine
+	templates template.TemplateEngine
 	db        *DB
-	form      app.FormService
+	form      forms.Service
 }
 
 func (r *Router) Setup(rtr fiber.Router) {
@@ -88,6 +91,7 @@ func (r *Router) EditGET(c *fiber.Ctx) error {
 }
 
 func (r *Router) EditPOST(c *fiber.Ctx) error {
+	time.Sleep(time.Second)
 	id := c.Params("id")
 	var formData ContactFormData
 	if err := r.form.Parse(c, &formData); err != nil {
