@@ -1,9 +1,16 @@
-I just updated the csrf lib to use its own middleware and cookies so
-we can run sessions on their own separately (like logging in and out)
+## Objective
+
+I just wanted to learn go templating and htmx. Ended up exploring some other ideas including:
+
+* automatic browser reload
+* layouts / templates 
+* components which are just functions
+* automatic csrf
+* automatic forms
+* validations
 
 ## TODO
 
-- create sessions for user
 - menu bar based on login state
 - header with name
 - edit name menu
