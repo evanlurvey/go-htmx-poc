@@ -39,9 +39,10 @@
             <a href="/contacts" class="text-xl font-extrabold text-white">
                 Contact Manager
             </a>
-            <div class="mx-4" hx-get="/counter" hx-trigger="auth from:body, click, load">
-                loading...
-            </div>
+                {{ counter }}
+            <!-- <div class="mx-4" hx-get="/counter" hx-trigger="auth from:body, click, load"> -->
+            <!--     loading... -->
+            <!-- </div> -->
             {{with ._user}} {{.FirstName}} {{end}}
         </header>
         <div hx-boost="true" hx-target="#content" class="flex flex-col" id="content">

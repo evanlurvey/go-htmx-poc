@@ -13,7 +13,7 @@ func SessionWithContext(ctx context.Context, session Session) context.Context {
 func SessionFromContext(ctx context.Context) Session {
 	session, ok := ctx.Value(sessionCtxKey).(Session)
 	if !ok {
-		return NewAnonymousSession()
+		return newAnonymousSession()
 	}
 	return session
 }

@@ -50,7 +50,7 @@ func NewTemplateEngine(fs FS, defaultLayout string) TemplateEngine {
 		defaultLayout: defaultLayout,
 	}
 }
-func (e TemplateEngine) RenderComponent(ctx context.Context, name string, data map[string]any) (template.HTML, error) {
+func (e TemplateEngine) RenderComponentHTML(ctx context.Context, name string, data map[string]any) (template.HTML, error) {
 	// main template
 	f, err := e.openFile(name)
 	if err != nil {
@@ -67,6 +67,24 @@ func (e TemplateEngine) RenderComponent(ctx context.Context, name string, data m
 	var buf bytes.Buffer
 	err = t.ExecuteTemplate(&buf, name, global)
 	return template.HTML(buf.String()), err
+}
+func (e TemplateEngine) RenderComponent(c *fiber.Ctx, name string, data map[string]any) error {
+	ctx := c.UserContext()
+	// main template
+	f, err := e.openFile(name)
+	if err != nil {
+		return err
+	}
+	t, err := template.New(name).Parse(f)
+	if err != nil {
+		return err
+	}
+	// magically add user to everything
+	global := FromContext(ctx)
+	maps.Copy(global, data) // binding will overwrite global on conflict
+
+	c.Set("content-type", fiber.MIMETextHTMLCharsetUTF8)
+	return t.ExecuteTemplate(c, name, global)
 }
 
 func (e TemplateEngine) Render(c *fiber.Ctx, name string, data map[string]any, layouts ...string) error {

@@ -1,9 +1,10 @@
-{{template "layouts/main.html" .}}
-
-{{define "title"}}title thing here{{end}}
-
-
+{{template "layouts/main.html" .}} {{define "title"}}title thing here{{end}}
 {{define "content"}}
 <h1>index</h1>
-{{.name}}
-{{end}}
+<form>
+    <input autocomplete="off" type="text" placeholder="search me daddy" name="name" hx-get="/search"
+        hx-trigger="keyup changed, search" hx-target="#results" hx-indicator=".htmx-indicator" />
+    <div class="htmx-indicator opacity-0">I am loading</div>
+</form>
+<div id="results"></div>
+{{.name}} {{end}}

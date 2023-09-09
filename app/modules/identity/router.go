@@ -128,7 +128,7 @@ func (r *Router) LoginPOST(c *fiber.Ctx) error {
 		outcome: loginOutcome_success,
 	})
 
-	session := NewAuthenticatedSession(user.User)
+	session := newAuthenticatedSession(user.User)
 	r.db.storeSession(ctx, session)
 
 	c.Cookie(&fiber.Cookie{

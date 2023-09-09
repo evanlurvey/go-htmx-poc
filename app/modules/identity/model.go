@@ -83,6 +83,25 @@ func (s Session) Valid() bool {
 	return time.Now().Before(s.expires)
 }
 
+func newAnonymousSession() Session {
+	return Session{
+		id:      utils.NewID(),
+		token:   utils.NewID(32),
+		expires: time.Now().Add(time.Hour * 12),
+		state:   SessionState_Anonymous,
+	}
+}
+
+func newAuthenticatedSession(u User) Session {
+	return Session{
+		id:      utils.NewID(),
+		token:   utils.NewID(32),
+		expires: time.Now().Add(time.Hour * 12),
+		state:   SessionState_Authenticated,
+		user:    u,
+	}
+}
+
 type phc struct {
 	algorithm string
 	version   int

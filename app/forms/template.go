@@ -16,7 +16,7 @@ func form(ctx context.Context) any {
 		if f.Template == "" {
 			f.Template = "form.html"
 		}
-		return templateEngine.RenderComponent(ctx, "form.html", template.M{
+		return templateEngine.RenderComponentHTML(ctx, f.Template, template.M{
 			"form": f,
 		})
 	}

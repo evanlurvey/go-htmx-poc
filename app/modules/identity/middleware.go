@@ -26,7 +26,7 @@ func SessionMiddleware(db *DB) fiber.Handler {
 
 		// fallback to anonymous session
 		if session.id == "" || !session.Valid() {
-			session = NewAnonymousSession()
+			session = newAnonymousSession()
 			db.storeSession(ctx, session)
 			c.Cookie(&fiber.Cookie{
 				Name:     sessionCookie,

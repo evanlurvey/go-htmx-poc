@@ -1,0 +1,6 @@
+<div class="flex justify-center items-center p-8 rounded outline" 
+    hx-get="/counter"
+    hx-swap="outerHTML"
+    hx-trigger="auth from:body, click">
+    <p>{{ .count }}!!</p>
+</div>
