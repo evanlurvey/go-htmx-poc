@@ -2,7 +2,6 @@ package identity
 
 import (
 	"htmx-poc/app"
-	"htmx-poc/app/csrf"
 	"htmx-poc/app/forms"
 	"htmx-poc/app/logging"
 	"htmx-poc/app/template"
