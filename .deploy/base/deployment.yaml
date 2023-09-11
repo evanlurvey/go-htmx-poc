@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  minReadySeconds: 3
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 60
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+  template:
+    # metadata:
+      # annotations:
+      #   prometheus.io/scrape: "true"
+      #   prometheus.io/port: "9797"
+    spec:
+      containers:
+        - name: htmx-poc-webapp
+          image: htmx-poc
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: http-metrics
+              containerPort: 9797
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 30Mi
