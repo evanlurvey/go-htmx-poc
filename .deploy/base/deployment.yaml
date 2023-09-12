@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment
+  name: htmx-poc-deployment
 spec:
   minReadySeconds: 3
   revisionHistoryLimit: 5
@@ -14,9 +14,9 @@ spec:
   selector:
   template:
     # metadata:
-      # annotations:
-      #   prometheus.io/scrape: "true"
-      #   prometheus.io/port: "9797"
+    # annotations:
+    #   prometheus.io/scrape: "true"
+    #   prometheus.io/port: "9797"
     spec:
       containers:
         - name: htmx-poc-webapp
@@ -29,6 +29,10 @@ spec:
             - name: http-metrics
               containerPort: 9797
               protocol: TCP
+          envFrom:
+            secretRef:
+              name: htmx-poc-env
+              optional: true
           resources:
             limits:
               cpu: 200m

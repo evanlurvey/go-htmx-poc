@@ -11,6 +11,7 @@ I just wanted to learn go templating and htmx. Ended up exploring some other ide
 
 ## TODO
 
+- actually use tailwind generated css
 - menu bar based on login state
 - header with name
 - edit name menu

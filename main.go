@@ -4,6 +4,7 @@ import (
 	"context"
 	"htmx-poc/app/logging"
 	"htmx-poc/app/web"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -20,11 +21,14 @@ func logger() *zap.Logger {
 }
 
 func main() {
-	l := logger()
+	csrfSecret := os.Getenv("SECRET_CSRF_TOKEN_KEY")
+	appEnv := os.Getenv("APP_ENV")
+	l := logger().With(zap.String("app_env", appEnv))
+	l.Info("csrfDebug", zap.String("csrf", csrfSecret))
 	ctx := logging.WithContext(context.Background(), l)
 
 	web := web.NewWebApp(ctx, web.Config{
-		CSRFSecret: []byte("not a secret"),
+		CSRFSecret: []byte(csrfSecret),
 	})
 
 	l.Info("starting server")

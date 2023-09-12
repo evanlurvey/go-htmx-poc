@@ -5,5 +5,11 @@ images:
   - name: htmx-poc
     newName: ghcr.io/myautoinventory/htmx-poc
     newTag: local-latest
+secretGenerator:
+  - name: htmx-poc-env
+    envs:
+      # export SOPS_AGE_RECIPIENTS=age1jrtxe355vt94t0ttr3g0qayvpueh8d6rzmske5umz89nu6effqvqu9u2xl,age1m7x29urm8e49je8jyq8hacqkzt7vd8umk0uq0tj9xtwvjvaw5u5ssk26l7
+      # sops -e --encrypted-regex '^SECRET.*' --input-type=env config.env > config.env.encrypted
+      - config.env.encrypted
 resources:
   - "../../base"
