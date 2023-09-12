@@ -30,9 +30,9 @@ spec:
               containerPort: 9797
               protocol: TCP
           envFrom:
-            secretRef:
-              name: htmx-poc-env
-              optional: true
+            - secretRef:
+                name: htmx-poc-env
+                optional: true
           resources:
             limits:
               cpu: 200m
