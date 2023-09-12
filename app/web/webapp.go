@@ -38,6 +38,7 @@ func NewWebApp(ctx context.Context, cfg Config) *fiber.App {
 	form := forms.NewService(csrfSvc)
 
 	web.Use(compress.New())
+	setupStatic(web) // we don't care to log static interactions but want it compressed
 	web.Use(logging.Middleware(l))
 	web.Use(csrfSvc.Middleware)
 	web.Use(identity.SessionMiddleware(identityDB))

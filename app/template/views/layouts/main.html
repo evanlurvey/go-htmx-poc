@@ -5,7 +5,8 @@
     <title>{{with .PageTitle}}{{.}}{{else}}Contacts App{{end}}</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!--tailwind-->
+    <link rel="stylesheet" href="/static/style.css" />
     <script src="https://unpkg.com/htmx.org@1.9.4"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.11"></script>
 
@@ -39,7 +40,7 @@
             <a href="/contacts" class="text-xl font-extrabold text-white">
                 Contact Manager
             </a>
-                {{ counter }}
+            {{ counter }}
             <!-- <div class="mx-4" hx-get="/counter" hx-trigger="auth from:body, click, load"> -->
             <!--     loading... -->
             <!-- </div> -->

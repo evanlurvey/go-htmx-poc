@@ -10,6 +10,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+//go:generate tailwindcss -o app/web/static/style.css -m
+// TODO: use go generate to scrape together all of the localization entries and build json for it
+
 func logger() *zap.Logger {
 	zapConfig := zap.NewProductionConfig()
 	zapConfig.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder

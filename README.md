@@ -2,12 +2,12 @@
 
 I just wanted to learn go templating and htmx. Ended up exploring some other ideas including:
 
-* automatic browser reload
-* layouts / templates 
-* components which are just functions
-* automatic csrf
-* automatic forms
-* validations
+- automatic browser reload
+- layouts / templates
+- components which are just functions
+- automatic csrf
+- automatic forms
+- validations
 
 ## TODO
 
@@ -17,10 +17,16 @@ I just wanted to learn go templating and htmx. Ended up exploring some other ide
 - edit name menu
 
 ##### Infrastructure
+
 k3s provisioned [with](flux https://fluxcd.io/flux/get-started/)
 
 ##### Running
+
 ```console
+# Auto reloading local dev
+go install github.com/cosmtrek/air@latest  # install if needed
+air
+
 # Build with rancher desktop / nerdctl
 nerdctl -n k8s.io build -t ghcr.io/evanlurvey/htmx-poc .
 ```
@@ -29,7 +35,7 @@ nerdctl -n k8s.io build -t ghcr.io/evanlurvey/htmx-poc .
 
 ```console
 # watch
-tailwindcss -o app/static/style.css -w
+tailwindcss -o app/web/static/style.css -w
 # prod / ci
-tailwindcss -o app/static/style.css -m
+tailwindcss -o app/web/static/style.css -m
 ```
